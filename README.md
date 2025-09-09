@@ -1,7 +1,6 @@
 # Property Management Integration Platform (PMIP)
 
-<div align="center">
-  <img src="docs/assets/pmip-logo.png" alt="PMIP Logo" width="200"/>
+<div align="left">
   
   **The Universal Sync Platform for Property Management**
   
