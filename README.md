@@ -211,10 +211,10 @@ PMIP Core
 
 PMIP uses open source adapters for property management system integrations:
 
-- **[@pmip/propertyware-adapter](https://github.com/rashidazarang/propertyware-adapter)** - PropertyWare SOAP API client
-- **[@pmip/servicefusion-adapter](https://github.com/rashidazarang/servicefusion-adapter)** - ServiceFusion REST API client
-- **@pmip/yardi-adapter** - Yardi REST API client (Coming soon)
-- **@pmip/rentvine-adapter** - RentVine REST API client (Coming Q2 2025)
+- **[PropertyWare Adapter](https://github.com/rashidazarang/propertyware-adapter)** - PropertyWare SOAP API client
+- **[ServiceFusion Adapter](https://github.com/rashidazarang/servicefusion-adapter)** - ServiceFusion REST API client
+- **Yardi Adapter** - Yardi REST API client (Coming soon)
+- **RentVine Adapter** - RentVine REST API client (Coming Q2 2025)
 
 The core platform (deduplication, entity mapping, orchestration) remains proprietary to protect valuable IP while adapters are open source for community benefit.
 

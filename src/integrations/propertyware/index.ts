@@ -1,45 +1,48 @@
 /**
- * PropertyWare SOAP Integration for PMIP
- * Handles all PropertyWare API interactions
+ * PropertyWare Integration Wrapper for PMIP
+ * Uses the external @rashidazarang/propertyware-adapter npm package
  */
 
-import * as soap from 'soap';
+import { PropertyWareAdapter } from '@rashidazarang/propertyware-adapter';
 import { PropertyWareConfig } from '../../types';
 import { logger } from '../../utils/logger';
-import { RateLimiter } from '../../utils/rate-limiter';
+import { EventEmitter } from 'events';
 
-export class PropertyWareIntegration {
+export class PropertyWareIntegration extends EventEmitter {
+  private adapter: PropertyWareAdapter;
   private config: PropertyWareConfig;
-  private client: any = null;
-  private rateLimiter: RateLimiter;
   private isInitialized: boolean = false;
   
   constructor(config: PropertyWareConfig) {
+    super();
     this.config = config;
-    this.rateLimiter = new RateLimiter(2); // 2 requests per second
+    
+    // Initialize the external adapter
+    this.adapter = new PropertyWareAdapter({
+      wsdl: config.wsdl,
+      url: config.url,
+      username: config.username,
+      password: config.password,
+      options: {
+        rateLimit: config.rateLimit || 2,
+        retryAttempts: config.retryAttempts || 3,
+        timeout: config.timeout || 30000,
+        batchSize: config.batchSize || 100
+      }
+    });
+    
+    // Forward adapter events
+    this.setupEventForwarding();
   }
   
   /**
-   * Initialize PropertyWare SOAP client
+   * Initialize PropertyWare adapter
    */
   async initialize(): Promise<void> {
     try {
-      // Create SOAP client
-      this.client = await soap.createClientAsync(this.config.wsdl, {
-        endpoint: this.config.url,
-        forceSoap12Headers: true
-      });
-      
-      // Set authentication headers
-      const authHeader = {
-        Username: this.config.username,
-        Password: this.config.password
-      };
-      
-      this.client.addSoapHeader(authHeader);
-      
+      await this.adapter.connect();
       this.isInitialized = true;
-      logger.info('PropertyWare integration initialized');
+      logger.info('PropertyWare integration initialized using external adapter');
     } catch (error) {
       logger.error('Failed to initialize PropertyWare integration', error);
       throw error;
@@ -47,318 +50,149 @@ export class PropertyWareIntegration {
   }
   
   /**
+   * Setup event forwarding from adapter to PMIP
+   */
+  private setupEventForwarding(): void {
+    // Forward connection events
+    this.adapter.on('connected', () => {
+      this.emit('connected');
+      logger.debug('PropertyWare adapter connected');
+    });
+    
+    this.adapter.on('disconnected', () => {
+      this.emit('disconnected');
+      logger.debug('PropertyWare adapter disconnected');
+    });
+    
+    this.adapter.on('error', (error) => {
+      this.emit('error', error);
+      logger.error('PropertyWare adapter error', error);
+    });
+    
+    // Forward sync events
+    this.adapter.on('sync:started', (data) => {
+      this.emit('sync:started', data);
+    });
+    
+    this.adapter.on('sync:progress', (data) => {
+      this.emit('sync:progress', data);
+    });
+    
+    this.adapter.on('sync:completed', (data) => {
+      this.emit('sync:completed', data);
+    });
+    
+    this.adapter.on('sync:error', (data) => {
+      this.emit('sync:error', data);
+    });
+  }
+  
+  /**
    * Get portfolios from PropertyWare
    */
-  async getPortfolios(params?: any): Promise<any[]> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        includeInactive: params?.includeInactive || false,
-        pageSize: params?.pageSize || 100,
-        pageNumber: params?.pageNumber || 1
-      };
-      
-      const [result] = await this.client.getPortfoliosAsync(request);
-      
-      if (!result || !result.portfolios) {
-        return [];
-      }
-      
-      return this.normalizePortfolios(result.portfolios);
-    } catch (error) {
-      logger.error('Failed to get portfolios from PropertyWare', error);
-      throw error;
-    }
+  async getPortfolios(options?: any): Promise<any[]> {
+    return this.adapter.getPortfolios(options);
   }
   
   /**
    * Get buildings from PropertyWare
    */
-  async getBuildings(portfolioIds?: string[]): Promise<any[]> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        portfolioIds: portfolioIds || [],
-        includeUnits: true,
-        pageSize: 100,
-        pageNumber: 1
-      };
-      
-      const [result] = await this.client.getBuildingsAsync(request);
-      
-      if (!result || !result.buildings) {
-        return [];
-      }
-      
-      return this.normalizeBuildings(result.buildings);
-    } catch (error) {
-      logger.error('Failed to get buildings from PropertyWare', error);
-      throw error;
-    }
+  async getBuildings(portfolioId?: string): Promise<any[]> {
+    return this.adapter.getBuildings(portfolioId);
   }
   
   /**
-   * Get work orders from PropertyWare
+   * Get units from PropertyWare
    */
-  async getWorkOrders(params?: any): Promise<any[]> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        portfolioIds: params?.portfolioIds || [],
-        status: params?.status || 'Open',
-        startDate: params?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-        endDate: params?.endDate || new Date(),
-        pageSize: params?.pageSize || 100,
-        pageNumber: params?.pageNumber || 1
-      };
-      
-      const [result] = await this.client.getWorkOrdersAsync(request);
-      
-      if (!result || !result.workOrders) {
-        return [];
-      }
-      
-      return this.normalizeWorkOrders(result.workOrders);
-    } catch (error) {
-      logger.error('Failed to get work orders from PropertyWare', error);
-      throw error;
-    }
+  async getUnits(buildingId?: string): Promise<any[]> {
+    return this.adapter.getUnits(buildingId);
   }
   
   /**
    * Get leases from PropertyWare
    */
-  async getLeases(buildingIds?: string[]): Promise<any[]> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        buildingIds: buildingIds || [],
-        includeExpired: false,
-        pageSize: 100,
-        pageNumber: 1
-      };
-      
-      const [result] = await this.client.getLeasesAsync(request);
-      
-      if (!result || !result.leases) {
-        return [];
-      }
-      
-      return this.normalizeLeases(result.leases);
-    } catch (error) {
-      logger.error('Failed to get leases from PropertyWare', error);
-      throw error;
-    }
+  async getLeases(options?: any): Promise<any[]> {
+    return this.adapter.getLeases(options);
   }
   
   /**
-   * Update work order status in PropertyWare
+   * Get work orders from PropertyWare
    */
-  async updateWorkOrderStatus(workOrderId: string, status: string, notes?: string): Promise<void> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        workOrderId,
-        status,
-        notes: notes || '',
-        updatedBy: 'PMIP',
-        updatedDate: new Date()
-      };
-      
-      await this.client.updateWorkOrderAsync(request);
-      
-      logger.info(`Updated work order ${workOrderId} status to ${status}`);
-    } catch (error) {
-      logger.error(`Failed to update work order ${workOrderId}`, error);
-      throw error;
-    }
+  async getWorkOrders(options?: any): Promise<any[]> {
+    return this.adapter.getWorkOrders(options);
   }
   
   /**
-   * Create inspection in PropertyWare
+   * Create work order in PropertyWare
    */
-  async scheduleInspection(leaseId: string, date: Date, type: string): Promise<any> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        leaseId,
-        inspectionDate: date,
-        inspectionType: type,
-        notes: `Scheduled via PMIP`,
-        createdBy: 'PMIP'
-      };
-      
-      const [result] = await this.client.createInspectionAsync(request);
-      
-      return result;
-    } catch (error) {
-      logger.error('Failed to schedule inspection', error);
-      throw error;
-    }
+  async createWorkOrder(data: any): Promise<any> {
+    return this.adapter.createWorkOrder(data);
   }
   
   /**
-   * Get lease details
+   * Update work order in PropertyWare
    */
-  async getLeaseDetails(leaseId: string): Promise<any> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const [result] = await this.client.getLeaseByIdAsync({ leaseId });
-      
-      if (!result) {
-        throw new Error(`Lease not found: ${leaseId}`);
-      }
-      
-      return this.normalizeLease(result);
-    } catch (error) {
-      logger.error(`Failed to get lease details for ${leaseId}`, error);
-      throw error;
-    }
+  async updateWorkOrder(id: string, data: any): Promise<any> {
+    return this.adapter.updateWorkOrder(id, data);
   }
   
   /**
-   * Calculate deposit refund
+   * Get vendors from PropertyWare
    */
-  async calculateDeposit(leaseId: string): Promise<any> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const request = {
-        leaseId,
-        includeCharges: true,
-        includeCredits: true
-      };
-      
-      const [result] = await this.client.calculateDepositRefundAsync(request);
-      
-      return {
-        totalDeposit: result.totalDeposit,
-        totalCharges: result.totalCharges,
-        refundAmount: result.refundAmount,
-        charges: result.charges || []
-      };
-    } catch (error) {
-      logger.error(`Failed to calculate deposit for lease ${leaseId}`, error);
-      throw error;
-    }
+  async getVendors(options?: any): Promise<any[]> {
+    return this.adapter.getVendors(options);
   }
   
   /**
-   * Get work order by ID
+   * Get contacts from PropertyWare
    */
-  async getWorkOrder(workOrderId: string): Promise<any> {
-    await this.rateLimiter.wait();
-    
-    try {
-      const [result] = await this.client.getWorkOrderByIdAsync({ workOrderId });
-      
-      if (!result) {
-        throw new Error(`Work order not found: ${workOrderId}`);
-      }
-      
-      return this.normalizeWorkOrder(result);
-    } catch (error) {
-      logger.error(`Failed to get work order ${workOrderId}`, error);
-      throw error;
-    }
+  async getContacts(options?: any): Promise<any[]> {
+    return this.adapter.getContacts(options);
   }
   
-  // Normalization methods
-  
-  private normalizePortfolios(portfolios: any[]): any[] {
-    return portfolios.map(p => this.normalizePortfolio(p));
+  /**
+   * Get owners from PropertyWare
+   */
+  async getOwners(options?: any): Promise<any[]> {
+    return this.adapter.getOwners(options);
   }
   
-  private normalizePortfolio(portfolio: any): any {
+  /**
+   * Get prospects from PropertyWare
+   */
+  async getProspects(options?: any): Promise<any[]> {
+    return this.adapter.getProspects(options);
+  }
+  
+  /**
+   * Batch sync entities from PropertyWare
+   */
+  async batchSync(entityType: string, options?: any): Promise<any> {
+    return this.adapter.batchSync(entityType, options);
+  }
+  
+  /**
+   * Get all entities (paginated automatically)
+   */
+  async getAllEntities(entityType: string, options?: any): Promise<any[]> {
+    return this.adapter.getAllEntities(entityType, options);
+  }
+  
+  /**
+   * Search entities with filters
+   */
+  async searchEntities(entityType: string, filters: any): Promise<any[]> {
+    return this.adapter.searchEntities(entityType, filters);
+  }
+  
+  /**
+   * Get adapter status
+   */
+  getStatus(): any {
     return {
-      portfolioId: portfolio.ID,
-      name: portfolio.Name,
-      active: portfolio.Active === 'true',
-      ownerFirstName: portfolio.OwnerFirstName,
-      ownerLastName: portfolio.OwnerLastName,
-      ownerEmail: portfolio.OwnerEmail,
-      ownerPhone: portfolio.OwnerPhone,
-      address: portfolio.Address,
-      city: portfolio.City,
-      state: portfolio.State,
-      zip: portfolio.Zip,
-      createdAt: new Date(portfolio.CreatedDate),
-      updatedAt: new Date(portfolio.ModifiedDate)
-    };
-  }
-  
-  private normalizeBuildings(buildings: any[]): any[] {
-    return buildings.map(b => this.normalizeBuilding(b));
-  }
-  
-  private normalizeBuilding(building: any): any {
-    return {
-      buildingId: building.ID,
-      buildingKey: building.Key,
-      portfolioKey: building.PortfolioKey,
-      buildingName: building.Name,
-      address: building.Address,
-      city: building.City,
-      state: building.State,
-      zip: building.Zip,
-      unitCount: parseInt(building.UnitCount) || 0,
-      yearBuilt: building.YearBuilt,
-      squareFeet: building.SquareFeet,
-      createdAt: new Date(building.CreatedDate),
-      updatedAt: new Date(building.ModifiedDate)
-    };
-  }
-  
-  private normalizeWorkOrders(workOrders: any[]): any[] {
-    return workOrders.map(wo => this.normalizeWorkOrder(wo));
-  }
-  
-  private normalizeWorkOrder(workOrder: any): any {
-    return {
-      workOrderId: workOrder.ID,
-      buildingId: workOrder.BuildingID,
-      portfolioId: workOrder.PortfolioID,
-      unitId: workOrder.UnitID,
-      description: workOrder.Description,
-      status: workOrder.Status,
-      priority: workOrder.Priority,
-      category: workOrder.Category,
-      assignedVendor: workOrder.AssignedVendor,
-      createdBy: workOrder.CreatedBy,
-      createdAt: new Date(workOrder.CreatedDate),
-      updatedAt: new Date(workOrder.ModifiedDate),
-      completedAt: workOrder.CompletedDate ? new Date(workOrder.CompletedDate) : null,
-      estimatedCost: parseFloat(workOrder.EstimatedCost) || 0,
-      actualCost: parseFloat(workOrder.ActualCost) || 0
-    };
-  }
-  
-  private normalizeLeases(leases: any[]): any[] {
-    return leases.map(l => this.normalizeLease(l));
-  }
-  
-  private normalizeLease(lease: any): any {
-    return {
-      leaseId: lease.ID,
-      buildingId: lease.BuildingID,
-      unitId: lease.UnitID,
-      tenantName: `${lease.TenantFirstName} ${lease.TenantLastName}`.trim(),
-      tenantEmail: lease.TenantEmail,
-      tenantPhone: lease.TenantPhone,
-      startDate: new Date(lease.StartDate),
-      endDate: new Date(lease.EndDate),
-      rentAmount: parseFloat(lease.RentAmount) || 0,
-      depositAmount: parseFloat(lease.DepositAmount) || 0,
-      status: lease.Status,
-      createdAt: new Date(lease.CreatedDate),
-      updatedAt: new Date(lease.ModifiedDate)
+      isConnected: this.adapter.isConnected(),
+      isInitialized: this.isInitialized,
+      rateLimitStatus: this.adapter.getRateLimitStatus()
     };
   }
   
@@ -366,8 +200,15 @@ export class PropertyWareIntegration {
    * Disconnect from PropertyWare
    */
   async disconnect(): Promise<void> {
-    this.client = null;
+    await this.adapter.disconnect();
     this.isInitialized = false;
     logger.info('PropertyWare integration disconnected');
+  }
+  
+  /**
+   * Get the underlying adapter instance (for advanced usage)
+   */
+  getAdapter(): PropertyWareAdapter {
+    return this.adapter;
   }
 }

@@ -51,6 +51,8 @@
     "@aws-sdk/client-lambda": "^3.450.0",
     "@aws-sdk/client-sns": "^3.450.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@rashidazarang/propertyware-adapter": "^1.0.0",
+    "@rashidazarang/servicefusion-adapter": "^1.0.0",
     "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.6.8",
     "bullmq": "^5.0.0",
@@ -63,10 +65,8 @@
     "pino-pretty": "^10.3.1",
     "rate-limiter-flexible": "^5.0.0",
     "redis": "^4.6.0",
-    "soap": "^1.0.0",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
-    "xml2js": "^0.6.2",
     "zod": "^3.22.0"
   },
   "devDependencies": {
