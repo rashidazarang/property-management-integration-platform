@@ -192,18 +192,31 @@ const config = {
 PMIP is built on [Agent Orchestra](https://github.com/rashidazarang/agent-orchestra) v2.0, providing a robust foundation for multi-protocol orchestration.
 
 ```
-PMIP
-├── Orchestration Layer (Agent Orchestra)
+PMIP Core
+├── Orchestration Layer (Agent Orchestra v2.0)
 ├── Integration Layer
 │   ├── PropertyWare SOAP Adapter
 │   ├── ServiceFusion REST Adapter
-│   └── GreenLight Lambda Adapter
+│   └── AWS Lambda Adapter (for existing implementations)
 ├── Intelligence Layer
 │   ├── Deduplication Service
-│   └── Conflict Resolution
+│   ├── Conflict Resolution Engine
+│   └── Entity Mapping Service
 └── Data Layer
-    └── Supabase Warehouse
+    ├── Supabase Warehouse
+    └── Cache Layer (Redis/Memory)
 ```
+
+### Open Source Adapters
+
+PMIP uses open source adapters for property management system integrations:
+
+- **[@pmip/propertyware-adapter](https://github.com/rashidazarang/propertyware-adapter)** - PropertyWare SOAP API client
+- **[@pmip/servicefusion-adapter](https://github.com/rashidazarang/servicefusion-adapter)** - ServiceFusion REST API client
+- **@pmip/yardi-adapter** - Yardi REST API client (Coming soon)
+- **@pmip/rentvine-adapter** - RentVine REST API client (Coming Q2 2025)
+
+The core platform (deduplication, entity mapping, orchestration) remains proprietary to protect valuable IP while adapters are open source for community benefit.
 
 ## 📊 Monitoring & Analytics
 

@@ -1,20 +1,21 @@
 /**
- * GreenLight Lambda Adapter
- * Wraps existing GreenLight Lambda functions for use in PMIP
+ * AWS Lambda Sync Adapter
+ * Wraps existing Lambda-based sync implementations for use in PMIP
+ * Supports SNS-based workflow orchestration patterns
  */
 
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
-import { GreenlightConfig } from '../../types';
+import { LambdaSyncConfig } from '../../types';
 import { logger } from '../../utils/logger';
 
-export class GreenlightAdapter {
+export class LambdaSyncAdapter {
   private lambdaClient: LambdaClient;
   private snsClient: SNSClient;
-  private config: GreenlightConfig;
+  private config: LambdaSyncConfig;
   private functionCache: Map<string, string> = new Map();
 
-  constructor(config: GreenlightConfig) {
+  constructor(config: LambdaSyncConfig) {
     this.config = config;
     
     // Initialize AWS clients
@@ -34,7 +35,7 @@ export class GreenlightAdapter {
   }
 
   async initialize(): Promise<void> {
-    logger.info('Initializing GreenLight Lambda adapter');
+    logger.info('Initializing Lambda Sync adapter');
     
     // Verify Lambda functions are accessible
     for (const [name, arn] of this.functionCache) {
@@ -99,100 +100,100 @@ export class GreenlightAdapter {
     await this.snsClient.send(command);
   }
 
-  // Workflow step implementations (maps to your 11-step workflow)
+  // Generic workflow step implementations
 
-  async getPWPortfolios(): Promise<any> {
-    logger.info('Executing getPWPortfolios via Lambda');
-    return this.publishToSNS('workorders', 'getPWPortfolios', {
-      next: { handler: 'workorders', action: 'getPWWorkOrders' }
+  async fetchPortfolios(): Promise<any> {
+    logger.info('Fetching portfolios via Lambda');
+    return this.publishToSNS('workorders', 'getPortfolios', {
+      next: { handler: 'workorders', action: 'getWorkOrders' }
     });
   }
 
-  async getPWWorkOrders(portfolioIds?: string[]): Promise<any> {
-    logger.info('Executing getPWWorkOrders via Lambda');
-    return this.publishToSNS('workorders', 'getPWWorkOrders', {
+  async fetchWorkOrders(portfolioIds?: string[]): Promise<any> {
+    logger.info('Fetching work orders via Lambda');
+    return this.publishToSNS('workorders', 'getWorkOrders', {
       portfolioIds,
-      next: { handler: 'tenants', action: 'getSFCustomers' }
+      next: { handler: 'tenants', action: 'getCustomers' }
     });
   }
 
-  async getSFCustomers(page?: number): Promise<any> {
-    logger.info('Executing getSFCustomers via Lambda');
-    return this.publishToSNS('tenants', 'getSFCustomers', {
+  async fetchCustomers(page?: number): Promise<any> {
+    logger.info('Fetching customers via Lambda');
+    return this.publishToSNS('tenants', 'getCustomers', {
       page,
-      next: { handler: 'workorders', action: 'getSFJobs' }
+      next: { handler: 'workorders', action: 'getJobs' }
     });
   }
 
-  async getSFJobs(page?: number): Promise<any> {
-    logger.info('Executing getSFJobs via Lambda');
-    return this.publishToSNS('workorders', 'getSFJobs', {
+  async fetchJobs(page?: number): Promise<any> {
+    logger.info('Fetching jobs via Lambda');
+    return this.publishToSNS('workorders', 'getJobs', {
       page,
-      next: { handler: 'leases', action: 'getPWBuildings' }
+      next: { handler: 'leases', action: 'getBuildings' }
     });
   }
 
-  async getPWBuildings(): Promise<any> {
-    logger.info('Executing getPWBuildings via Lambda');
-    return this.publishToSNS('leases', 'getPWBuildings', {
-      next: { handler: 'leases', action: 'getPWLeases' }
+  async fetchBuildings(): Promise<any> {
+    logger.info('Fetching buildings via Lambda');
+    return this.publishToSNS('leases', 'getBuildings', {
+      next: { handler: 'leases', action: 'getLeases' }
     });
   }
 
-  async getPWLeases(buildingIds?: string[]): Promise<any> {
-    logger.info('Executing getPWLeases via Lambda');
-    return this.publishToSNS('leases', 'getPWLeases', {
+  async fetchLeases(buildingIds?: string[]): Promise<any> {
+    logger.info('Fetching leases via Lambda');
+    return this.publishToSNS('leases', 'getLeases', {
       buildingIds,
-      next: { handler: 'workorders', action: 'pushPortfoliosToSF' }
+      next: { handler: 'workorders', action: 'syncPortfolios' }
     });
   }
 
-  async pushPortfoliosToSF(): Promise<any> {
-    logger.info('Executing pushPortfoliosToSF via Lambda');
-    return this.publishToSNS('workorders', 'pushPortfoliosToSF', {
-      next: { handler: 'workorders', action: 'syncUnitsToSF' }
+  async syncPortfolios(): Promise<any> {
+    logger.info('Syncing portfolios via Lambda');
+    return this.publishToSNS('workorders', 'syncPortfolios', {
+      next: { handler: 'workorders', action: 'syncUnits' }
     });
   }
 
-  async syncUnitsToSF(): Promise<any> {
-    logger.info('Executing syncUnitsToSF via Lambda');
-    return this.publishToSNS('workorders', 'syncUnitsToSF', {
-      next: { handler: 'leases', action: 'pushLeaseTenantsToSF' }
+  async syncUnits(): Promise<any> {
+    logger.info('Syncing units via Lambda');
+    return this.publishToSNS('workorders', 'syncUnits', {
+      next: { handler: 'leases', action: 'syncTenants' }
     });
   }
 
-  async pushLeaseTenantsToSF(): Promise<any> {
-    logger.info('Executing pushLeaseTenantsToSF via Lambda');
-    return this.publishToSNS('leases', 'pushLeaseTenantsToSF', {
-      next: { handler: 'workorders', action: 'pushWorkOrdersToSF' }
+  async syncTenants(): Promise<any> {
+    logger.info('Syncing tenants via Lambda');
+    return this.publishToSNS('leases', 'syncTenants', {
+      next: { handler: 'workorders', action: 'syncWorkOrders' }
     });
   }
 
-  async pushWorkOrdersToSF(): Promise<any> {
-    logger.info('Executing pushWorkOrdersToSF via Lambda');
-    return this.publishToSNS('workorders', 'pushWorkOrdersToSF', {
-      next: { handler: 'workorders', action: 'pushJobUpdatesToPW' }
+  async syncWorkOrders(): Promise<any> {
+    logger.info('Syncing work orders via Lambda');
+    return this.publishToSNS('workorders', 'syncWorkOrders', {
+      next: { handler: 'workorders', action: 'syncJobUpdates' }
     });
   }
 
-  async pushJobUpdatesToPW(): Promise<any> {
-    logger.info('Executing pushJobUpdatesToPW via Lambda');
-    return this.publishToSNS('workorders', 'pushJobUpdatesToPW');
+  async syncJobUpdates(): Promise<any> {
+    logger.info('Syncing job updates via Lambda');
+    return this.publishToSNS('workorders', 'syncJobUpdates');
   }
 
   /**
    * Trigger full sync workflow
    */
   async triggerFullSync(): Promise<any> {
-    logger.info('Triggering full GreenLight sync workflow');
+    logger.info('Triggering full sync workflow');
     return this.invokeLambda('web', { action: 'trigger' });
   }
 
   /**
-   * Get sync status from Supabase
+   * Get sync status from data warehouse
    */
   async getSyncStatus(): Promise<any> {
-    // This would query your Supabase sync_state table
+    // This would query your data warehouse sync_state table
     // For now, return mock status
     return {
       lastSync: new Date(),
@@ -211,7 +212,7 @@ export class GreenlightAdapter {
    */
   async setDryRun(enabled: boolean): Promise<void> {
     logger.info(`Setting dry run mode to ${enabled}`);
-    // This would update AWS SSM Parameter Store
+    // This would update AWS SSM Parameter Store or equivalent
     // For now, just log
   }
 
@@ -242,7 +243,7 @@ export class GreenlightAdapter {
   }
 
   async disconnect(): Promise<void> {
-    logger.info('Disconnecting GreenLight adapter');
+    logger.info('Disconnecting Lambda Sync adapter');
     // Clean up if needed
   }
 }
