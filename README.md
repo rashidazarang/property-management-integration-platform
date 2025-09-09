@@ -81,6 +81,7 @@ await pmip.sync('work-orders', {
 | PropertyWare | ✅ Stable | SOAP | Full CRUD, Batch Operations |
 | ServiceFusion | ✅ Stable | REST | Jobs, Customers, Scheduling |
 | Yardi | 🚧 Beta | REST | Work Orders, Leases |
+| RentVine | 📅 Planned | REST | Coming Q2 2025 |
 | AppFolio | 📅 Planned | REST | Coming Q2 2025 |
 | Buildium | 📅 Planned | REST | Coming Q3 2025 |
 
