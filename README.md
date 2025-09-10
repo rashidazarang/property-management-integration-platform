@@ -20,7 +20,7 @@ PMIP is an enterprise-grade integration platform specifically designed for prope
 - **Intelligent Deduplication**: Advanced matching algorithms prevent duplicate records
 - **Pre-Built Workflows**: Daily sync, maintenance requests, tenant lifecycle, financial reconciliation
 - **Real-Time Sync**: WebSocket support for instant updates
-- **Enterprise Ready**: SOC 2 compliant, 99.95% uptime SLA
+- **Enterprise Ready**: Production-tested architecture
 - **Extensible**: Plugin architecture for custom integrations
 
 ## 🚀 Quick Start
@@ -248,10 +248,9 @@ const metrics = await pmip.getMetrics();
 
 ## 🔒 Security & Compliance
 
-- **Encryption**: AES-256 at rest, TLS 1.3 in transit
-- **Authentication**: OAuth 2.0, API keys, SSO support
-- **Compliance**: SOC 2 Type II, GDPR, CCPA ready
-- **Audit Trail**: Immutable logs for 7 years
+- **Encryption**: Industry-standard encryption
+- **Authentication**: OAuth 2.0, API keys
+- **Audit Trail**: Complete logging and monitoring
 
 ## 🤝 Contributing
 
@@ -273,18 +272,15 @@ npm run dev
 
 ## 📚 Documentation
 
-- [Getting Started Guide](docs/getting-started.md)
-- [API Reference](docs/api-reference.md)
-- [Workflow Documentation](docs/workflows.md)
-- [Integration Guides](docs/integrations/)
-- [Troubleshooting](docs/troubleshooting.md)
+- [Testing Guide](TESTING.md)
+- [API Documentation](API.md)
+- [Dry-Run Implementation](DRY_RUN_IMPLEMENTATION.md)
+- [MCP Intelligence Integration](MCP_INTELLIGENCE_INTEGRATION.md)
 
 ## 🆘 Support
 
-- **Documentation**: [docs.pmip.io](https://docs.pmip.io)
-- **Email**: support@pmip.io
-- **Slack**: [Join our community](https://pmip-community.slack.com)
 - **GitHub Issues**: [Report bugs](https://github.com/rashidazarang/property-management-integration-platform/issues)
+- **Documentation**: [View documentation](https://github.com/rashidazarang/property-management-integration-platform/tree/main/docs)
 
 ## 📄 License
 
@@ -299,12 +295,4 @@ Special thanks to:
 - Anderson Properties for beta testing
 - The Agent Orchestra team for the orchestration framework
 
----
 
-<div align="center">
-  <strong>Ready to eliminate duplicate data entry?</strong>
-  <br>
-  <a href="https://pmip.io/signup">Get Started</a> •
-  <a href="https://pmip.io/demo">Book Demo</a> •
-  <a href="https://docs.pmip.io">Documentation</a>
-</div>
