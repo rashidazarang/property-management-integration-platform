@@ -50,9 +50,6 @@ export interface PropertyWareConfig {
   password: string;
   maxRetries?: number;
   timeout?: number;
-  rateLimit?: number;
-  retryAttempts?: number;
-  batchSize?: number;
 }
 
 export interface ServiceFusionConfig {
@@ -61,10 +58,6 @@ export interface ServiceFusionConfig {
   clientSecret: string;
   maxRetries?: number;
   timeout?: number;
-  rateLimit?: number;
-  retryAttempts?: number;
-  autoRefreshToken?: boolean;
-  maxConcurrent?: number;
 }
 
 export interface GreenlightConfig {
@@ -77,18 +70,6 @@ export interface GreenlightConfig {
     web: string;
   };
   snsTopic: string;
-}
-
-export interface LambdaSyncConfig {
-  region: string;
-  profile?: string;
-  functions: {
-    workorders: string;
-    leases: string;
-    tenants: string;
-    web: string;
-  };
-  snsTopic?: string;
 }
 
 export interface YardiConfig {

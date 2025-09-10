@@ -4,16 +4,14 @@
  */
 
 import { ServiceFusionAdapter } from '@rashidazarang/servicefusion-adapter';
-import { ServiceFusionConfig } from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
+import { ServiceFusionConfig } from '../../types';
+import { logger } from '../../utils/logger';
 import { EventEmitter } from 'events';
 
 export class ServiceFusionIntegration extends EventEmitter {
   private adapter: ServiceFusionAdapter;
   private config: ServiceFusionConfig;
   private isInitialized: boolean = false;
-  private isDryRun: boolean = false;
-  private mockData: Map<string, any> = new Map();
   
   constructor(config: ServiceFusionConfig) {
     super();
@@ -40,16 +38,7 @@ export class ServiceFusionIntegration extends EventEmitter {
   /**
    * Initialize ServiceFusion adapter
    */
-  async initialize(options?: { dryRun?: boolean }): Promise<void> {
-    this.isDryRun = options?.dryRun || false;
-    
-    if (this.isDryRun) {
-      logger.info('ServiceFusion integration initialized in DRY-RUN mode');
-      this.isInitialized = true;
-      this.setupMockData();
-      return;
-    }
-    
+  async initialize(): Promise<void> {
     try {
       await this.adapter.connect();
       this.isInitialized = true;
@@ -58,108 +47,6 @@ export class ServiceFusionIntegration extends EventEmitter {
       logger.error('Failed to initialize ServiceFusion integration', error);
       throw error;
     }
-  }
-  
-  /**
-   * Enable or disable dry-run mode
-   */
-  setDryRun(enabled: boolean): void {
-    this.isDryRun = enabled;
-    if (enabled) {
-      logger.info('ServiceFusion integration: DRY-RUN mode enabled');
-      this.setupMockData();
-    } else {
-      logger.info('ServiceFusion integration: DRY-RUN mode disabled');
-    }
-  }
-  
-  /**
-   * Setup mock data for dry-run mode
-   */
-  private setupMockData(): void {
-    // Mock customers
-    this.mockData.set('customers', [
-      {
-        customerId: 'MOCK-SF-CUST-001',
-        customerName: 'Mock Portfolio Alpha Customer',
-        customerType: 'portfolio',
-        address: '123 Mock Street, Mock City, TX 78701',
-        phone: '555-0100',
-        email: 'alpha@mockportfolio.com',
-        active: true,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date()
-      },
-      {
-        customerId: 'MOCK-SF-CUST-002',
-        customerName: 'Mock Building One Customer',
-        customerType: 'building',
-        parentCustomerId: 'MOCK-SF-CUST-001',
-        address: '123 Mock Street, Mock City, TX 78701',
-        phone: '555-0101',
-        active: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date()
-      }
-    ]);
-    
-    // Mock jobs
-    this.mockData.set('jobs', [
-      {
-        jobId: 'MOCK-SF-JOB-001',
-        checkNumber: 'CHK-001',
-        customerId: 'MOCK-SF-CUST-002',
-        description: 'Fix leaking faucet in unit 5',
-        status: 'open',
-        priority: 'normal',
-        category: 'Plumbing',
-        scheduledDate: new Date('2024-09-10'),
-        technicianId: 'MOCK-TECH-001',
-        customFields: {
-          propertyWareId: 'MOCK-WO-001',
-          buildingId: 'MOCK-BLD-001'
-        },
-        createdAt: new Date('2024-09-01'),
-        updatedAt: new Date()
-      },
-      {
-        jobId: 'MOCK-SF-JOB-002',
-        checkNumber: 'CHK-002',
-        customerId: 'MOCK-SF-CUST-002',
-        description: 'HVAC maintenance required',
-        status: 'in_progress',
-        priority: 'high',
-        category: 'HVAC',
-        scheduledDate: new Date('2024-09-11'),
-        technicianId: 'MOCK-TECH-002',
-        customFields: {
-          propertyWareId: 'MOCK-WO-002',
-          buildingId: 'MOCK-BLD-002'
-        },
-        createdAt: new Date('2024-09-05'),
-        updatedAt: new Date()
-      }
-    ]);
-    
-    // Mock technicians
-    this.mockData.set('technicians', [
-      {
-        technicianId: 'MOCK-TECH-001',
-        name: 'John Technician',
-        email: 'john.tech@mockservice.com',
-        phone: '555-1001',
-        skills: ['Plumbing', 'Electrical'],
-        available: true
-      },
-      {
-        technicianId: 'MOCK-TECH-002',
-        name: 'Jane Specialist',
-        email: 'jane.spec@mockservice.com',
-        phone: '555-1002',
-        skills: ['HVAC', 'Appliances'],
-        available: true
-      }
-    ]);
   }
   
   /**
@@ -220,10 +107,6 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Get customers from ServiceFusion
    */
   async getCustomers(options?: any): Promise<any[]> {
-    if (this.isDryRun) {
-      logger.info('[DRY-RUN] Returning mock customers');
-      return this.mockData.get('customers') || [];
-    }
     return this.adapter.getCustomers(options);
   }
   
@@ -238,14 +121,6 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Create customer in ServiceFusion
    */
   async createCustomer(data: any): Promise<any> {
-    if (this.isDryRun) {
-      logger.info('[DRY-RUN] Would create customer:', data);
-      return {
-        ...data,
-        customerId: `MOCK-SF-CUST-${Date.now()}`,
-        createdAt: new Date()
-      };
-    }
     return this.adapter.createCustomer(data);
   }
   
@@ -274,10 +149,6 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Get jobs from ServiceFusion
    */
   async getJobs(filters?: any): Promise<any[]> {
-    if (this.isDryRun) {
-      logger.info('[DRY-RUN] Returning mock jobs');
-      return this.mockData.get('jobs') || [];
-    }
     return this.adapter.getJobs(filters);
   }
   
@@ -292,16 +163,6 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Create job in ServiceFusion
    */
   async createJob(data: any): Promise<any> {
-    if (this.isDryRun) {
-      logger.info('[DRY-RUN] Would create job:', data);
-      return {
-        ...data,
-        jobId: `MOCK-SF-JOB-${Date.now()}`,
-        checkNumber: `CHK-${Date.now()}`,
-        status: 'open',
-        createdAt: new Date()
-      };
-    }
     return this.adapter.createJob(data);
   }
   
@@ -309,14 +170,6 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Update job in ServiceFusion
    */
   async updateJob(id: string, data: any): Promise<any> {
-    if (this.isDryRun) {
-      logger.info(`[DRY-RUN] Would update job ${id}:`, data);
-      return {
-        jobId: id,
-        ...data,
-        updatedAt: new Date()
-      };
-    }
     return this.adapter.updateJob(id, data);
   }
   
@@ -345,7 +198,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Batch sync jobs from external system
    */
   async batchSyncJobs(jobs: any[], options: any): Promise<any> {
-    return this.adapter.batchSyncJobs(jobs);
+    return this.adapter.batchSyncJobs(jobs, options);
   }
   
   /**
@@ -415,7 +268,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Send invoice via email
    */
   async sendInvoice(id: string, email: string): Promise<void> {
-    return this.adapter.sendInvoice(id);
+    return this.adapter.sendInvoice(id, email);
   }
   
   /**
@@ -479,7 +332,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    */
   getStatus(): any {
     return {
-      isConnected: this.adapter.isConnected,
+      isConnected: this.adapter.isConnected(),
       isInitialized: this.isInitialized,
       rateLimitStatus: this.adapter.getRateLimitStatus()
     };

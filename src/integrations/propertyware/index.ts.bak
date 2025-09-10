@@ -176,25 +176,25 @@ export class PropertyWareIntegration extends EventEmitter {
       logger.debug('PropertyWare adapter disconnected');
     });
     
-    this.adapter.on('error', (error: any) => {
+    this.adapter.on('error', (error) => {
       this.emit('error', error);
       logger.error('PropertyWare adapter error', error);
     });
     
     // Forward sync events
-    this.adapter.on('sync:started', (data: any) => {
+    this.adapter.on('sync:started', (data) => {
       this.emit('sync:started', data);
     });
     
-    this.adapter.on('sync:progress', (data: any) => {
+    this.adapter.on('sync:progress', (data) => {
       this.emit('sync:progress', data);
     });
     
-    this.adapter.on('sync:completed', (data: any) => {
+    this.adapter.on('sync:completed', (data) => {
       this.emit('sync:completed', data);
     });
     
-    this.adapter.on('sync:error', (data: any) => {
+    this.adapter.on('sync:error', (data) => {
       this.emit('sync:error', data);
     });
   }
@@ -218,7 +218,7 @@ export class PropertyWareIntegration extends EventEmitter {
       logger.info('[DRY-RUN] Returning mock buildings');
       const buildings = this.mockData.get('buildings') || [];
       return portfolioId 
-        ? buildings.filter((b: any) => b.portfolioKey === portfolioId)
+        ? buildings.filter(b => b.portfolioKey === portfolioId)
         : buildings;
     }
     return this.adapter.getBuildings(portfolioId);
@@ -319,7 +319,7 @@ export class PropertyWareIntegration extends EventEmitter {
    * Get all entities (paginated automatically)
    */
   async getAllEntities(entityType: string, options?: any): Promise<any[]> {
-    return this.adapter.getAllEntities(entityType);
+    return this.adapter.getAllEntities(entityType, options);
   }
   
   /**
@@ -334,7 +334,7 @@ export class PropertyWareIntegration extends EventEmitter {
    */
   getStatus(): any {
     return {
-      isConnected: this.adapter.isConnected,
+      isConnected: this.adapter.isConnected(),
       isInitialized: this.isInitialized,
       rateLimitStatus: this.adapter.getRateLimitStatus()
     };

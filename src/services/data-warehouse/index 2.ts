@@ -123,11 +123,6 @@ export class DataWarehouse {
    * Get last sync time
    */
   async getLastSyncTime(): Promise<Date | null> {
-    // In dry-run mode, return null (no previous syncs)
-    if (this.isDryRun) {
-      return null;
-    }
-    
     try {
       const { data, error } = await this.client!
         .from('sync_state')

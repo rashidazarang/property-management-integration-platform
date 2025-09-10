@@ -6,8 +6,8 @@
 
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
-import { LambdaSyncConfig } from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
+import { LambdaSyncConfig } from '../../types';
+import { logger } from '../../utils/logger';
 
 export class LambdaSyncAdapter {
   private lambdaClient: LambdaClient;
@@ -43,7 +43,7 @@ export class LambdaSyncAdapter {
         // Test invoke with empty payload
         await this.invokeLambda(name, { test: true });
         logger.info(`Verified access to ${name} Lambda function`);
-      } catch (error: any) {
+      } catch (error) {
         logger.warn(`Could not verify ${name} Lambda: ${error.message}`);
       }
     }

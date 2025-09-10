@@ -4,18 +4,16 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { DataWarehouseConfig } from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
+import { DataWarehouseConfig } from '../../types';
+import { logger } from '../../utils/logger';
 
 export class DataWarehouse {
   private config: DataWarehouseConfig;
   private client: SupabaseClient | null = null;
   private isConnected: boolean = false;
-  private isDryRun: boolean = false;
   
-  constructor(config: DataWarehouseConfig, options?: { dryRun?: boolean }) {
+  constructor(config: DataWarehouseConfig) {
     this.config = config;
-    this.isDryRun = options?.dryRun || false;
   }
   
   /**
@@ -23,13 +21,6 @@ export class DataWarehouse {
    */
   async initialize(): Promise<void> {
     try {
-      if (this.isDryRun) {
-        // In dry-run mode, skip actual connection
-        this.isConnected = true;
-        logger.info('Data warehouse initialized in DRY-RUN mode (no actual connection)');
-        return;
-      }
-      
       if (this.config.type === 'supabase') {
         this.client = createClient(this.config.url, this.config.key!);
         
@@ -66,24 +57,6 @@ export class DataWarehouse {
       return { connected: false };
     }
     
-    // In dry-run mode, return mock status
-    if (this.isDryRun) {
-      return {
-        connected: true,
-        type: this.config.type,
-        dryRun: true,
-        tables: {
-          'dim_portfolio': 0,
-          'dim_building': 0,
-          'dim_customer': 0,
-          'fact_work_orders': 0,
-          'fact_leases': 0,
-          'fact_jobs': 0,
-          'customer_mappings': 0
-        }
-      };
-    }
-    
     try {
       // Get table counts
       const tables = [
@@ -114,7 +87,7 @@ export class DataWarehouse {
       logger.error('Failed to get data warehouse status', error);
       return {
         connected: true,
-        error: (error as any).message
+        error: error.message
       };
     }
   }
@@ -123,11 +96,6 @@ export class DataWarehouse {
    * Get last sync time
    */
   async getLastSyncTime(): Promise<Date | null> {
-    // In dry-run mode, return null (no previous syncs)
-    if (this.isDryRun) {
-      return null;
-    }
-    
     try {
       const { data, error } = await this.client!
         .from('sync_state')

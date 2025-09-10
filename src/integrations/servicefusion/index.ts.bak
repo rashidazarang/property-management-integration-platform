@@ -345,7 +345,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Batch sync jobs from external system
    */
   async batchSyncJobs(jobs: any[], options: any): Promise<any> {
-    return this.adapter.batchSyncJobs(jobs);
+    return this.adapter.batchSyncJobs(jobs, options);
   }
   
   /**
@@ -415,7 +415,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    * Send invoice via email
    */
   async sendInvoice(id: string, email: string): Promise<void> {
-    return this.adapter.sendInvoice(id);
+    return this.adapter.sendInvoice(id, email);
   }
   
   /**
@@ -479,7 +479,7 @@ export class ServiceFusionIntegration extends EventEmitter {
    */
   getStatus(): any {
     return {
-      isConnected: this.adapter.isConnected,
+      isConnected: this.adapter.isConnected(),
       isInitialized: this.isInitialized,
       rateLimitStatus: this.adapter.getRateLimitStatus()
     };

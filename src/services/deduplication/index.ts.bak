@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { DeduplicationConfig, DeduplicationStrategy } from '../../types/index.js';
-import { logger } from '../../utils/logger.js';
+import { DeduplicationConfig, DeduplicationStrategy } from '../../types';
+import { logger } from '../../utils/logger';
 import * as crypto from 'crypto';
 
 interface MatchResult {

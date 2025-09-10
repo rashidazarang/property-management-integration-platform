@@ -12,7 +12,6 @@ import { GreenlightAdapter } from './adapters/greenlight/index.js';
 import { WorkflowManager } from './workflows/WorkflowManager.js';
 import { DeduplicationService } from './services/deduplication/index.js';
 import { DataWarehouse } from './services/data-warehouse/index.js';
-import { IntelligenceService } from './services/intelligence/IntelligenceService.js';
 import { logger } from './utils/logger.js';
 
 export class PMIP {
@@ -21,16 +20,14 @@ export class PMIP {
   private workflowManager: WorkflowManager;
   private deduplicationService: DeduplicationService;
   private dataWarehouse: DataWarehouse;
-  private intelligenceService: IntelligenceService | null = null;
   private integrations: Map<string, any> = new Map();
   private isDryRun: boolean = false;
 
-  constructor(config: PMIPConfig, options?: PMIPOptions) {
+  constructor(config: PMIPConfig) {
     this.config = config;
-    this.isDryRun = options?.dryRun || false;
     this.workflowManager = new WorkflowManager(this);
     this.deduplicationService = new DeduplicationService(config.deduplication);
-    this.dataWarehouse = new DataWarehouse(config.dataWarehouse, { dryRun: this.isDryRun });
+    this.dataWarehouse = new DataWarehouse(config.dataWarehouse);
   }
 
   /**
@@ -70,21 +67,6 @@ export class PMIP {
     
     // Initialize data warehouse
     await this.dataWarehouse.initialize();
-    
-    // Initialize Intelligence Service if adapters are configured
-    if (this.config.integrations.propertyware && this.config.integrations.servicefusion) {
-      try {
-        this.intelligenceService = new IntelligenceService(
-          this.config.integrations.propertyware,
-          this.config.integrations.servicefusion
-        );
-        await this.intelligenceService.initialize();
-        logger.info('Intelligence Service initialized');
-      } catch (error) {
-        logger.warn('Intelligence Service initialization failed (MCP Intelligence not available)', error);
-        // Continue without NLP support
-      }
-    }
     
     // Set up event handlers
     this.setupEventHandlers();
@@ -226,28 +208,6 @@ export class PMIP {
   }
 
   /**
-   * Process natural language query using Intelligence Service
-   */
-  async query(naturalLanguageQuery: string): Promise<any> {
-    if (!this.intelligenceService) {
-      throw new Error('Intelligence Service not available. Please ensure both PropertyWare and ServiceFusion are configured.');
-    }
-    
-    return this.intelligenceService.processQuery(naturalLanguageQuery);
-  }
-
-  /**
-   * Get query suggestions based on partial input
-   */
-  async getSuggestions(partial: string): Promise<string[]> {
-    if (!this.intelligenceService) {
-      return [];
-    }
-    
-    return this.intelligenceService.getSuggestions(partial);
-  }
-
-  /**
    * Get integration by name
    */
   getIntegration(name: string): any {
@@ -290,7 +250,7 @@ export class PMIP {
 
 // Export convenience function
 export async function createPMIP(config: PMIPConfig, options?: PMIPOptions): Promise<PMIP> {
-  const pmip = new PMIP(config, options);
+  const pmip = new PMIP(config);
   await pmip.initialize(options);
   return pmip;
 }

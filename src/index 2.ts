@@ -3,34 +3,30 @@
  * The universal sync platform for property management
  */
 
-// Temporarily removed Orchestra until package is available
-// import { createOrchestraV2, type Orchestra } from '@agent-orchestra/core';
-import { PMIPConfig, PMIPOptions } from './types/index.js';
-import { PropertyWareIntegration } from './integrations/propertyware/index.js';
-import { ServiceFusionIntegration } from './integrations/servicefusion/index.js';
-import { GreenlightAdapter } from './adapters/greenlight/index.js';
-import { WorkflowManager } from './workflows/WorkflowManager.js';
-import { DeduplicationService } from './services/deduplication/index.js';
-import { DataWarehouse } from './services/data-warehouse/index.js';
-import { IntelligenceService } from './services/intelligence/IntelligenceService.js';
-import { logger } from './utils/logger.js';
+import { createOrchestraV2, type Orchestra } from '@agent-orchestra/core';
+import { PMIPConfig, PMIPOptions } from './types';
+import { PropertyWareIntegration } from './integrations/propertyware';
+import { ServiceFusionIntegration } from './integrations/servicefusion';
+import { GreenlightAdapter } from './adapters/greenlight';
+import { WorkflowManager } from './workflows/WorkflowManager';
+import { DeduplicationService } from './services/deduplication';
+import { DataWarehouse } from './services/data-warehouse';
+import { logger } from './utils/logger';
 
 export class PMIP {
-  // private orchestra: Orchestra;
+  private orchestra: Orchestra;
   private config: PMIPConfig;
   private workflowManager: WorkflowManager;
   private deduplicationService: DeduplicationService;
   private dataWarehouse: DataWarehouse;
-  private intelligenceService: IntelligenceService | null = null;
   private integrations: Map<string, any> = new Map();
   private isDryRun: boolean = false;
 
-  constructor(config: PMIPConfig, options?: PMIPOptions) {
+  constructor(config: PMIPConfig) {
     this.config = config;
-    this.isDryRun = options?.dryRun || false;
     this.workflowManager = new WorkflowManager(this);
     this.deduplicationService = new DeduplicationService(config.deduplication);
-    this.dataWarehouse = new DataWarehouse(config.dataWarehouse, { dryRun: this.isDryRun });
+    this.dataWarehouse = new DataWarehouse(config.dataWarehouse);
   }
 
   /**
@@ -46,21 +42,21 @@ export class PMIP {
     
     logger.info('Initializing Property Management Integration Platform...');
 
-    // Orchestra initialization temporarily disabled
-    // this.orchestra = await createOrchestraV2({
-    //   protocols: {
-    //     mcp: true,
-    //     rest: true,
-    //     soap: true,
-    //     lambda: true,
-    //     websocket: true,
-    //     graphql: false // Future support
-    //   },
-    //   observability: {
-    //     enabled: true,
-    //     provider: 'opentelemetry'
-    //   }
-    // });
+    // Initialize Agent Orchestra as the core engine
+    this.orchestra = await createOrchestraV2({
+      protocols: {
+        mcp: true,
+        rest: true,
+        soap: true,
+        lambda: true,
+        websocket: true,
+        graphql: false // Future support
+      },
+      observability: {
+        enabled: true,
+        provider: 'opentelemetry'
+      }
+    });
 
     // Set up property management specific integrations
     await this.setupIntegrations(options);
@@ -70,21 +66,6 @@ export class PMIP {
     
     // Initialize data warehouse
     await this.dataWarehouse.initialize();
-    
-    // Initialize Intelligence Service if adapters are configured
-    if (this.config.integrations.propertyware && this.config.integrations.servicefusion) {
-      try {
-        this.intelligenceService = new IntelligenceService(
-          this.config.integrations.propertyware,
-          this.config.integrations.servicefusion
-        );
-        await this.intelligenceService.initialize();
-        logger.info('Intelligence Service initialized');
-      } catch (error) {
-        logger.warn('Intelligence Service initialization failed (MCP Intelligence not available)', error);
-        // Continue without NLP support
-      }
-    }
     
     // Set up event handlers
     this.setupEventHandlers();
@@ -99,7 +80,7 @@ export class PMIP {
     // PropertyWare SOAP Integration
     if (this.config.integrations.propertyware) {
       const pw = new PropertyWareIntegration(this.config.integrations.propertyware);
-      await pw.initialize({ dryRun: this.isDryRun });
+      await pw.initialize();
       this.integrations.set('propertyware', pw);
       logger.info('PropertyWare integration initialized');
     }
@@ -107,7 +88,7 @@ export class PMIP {
     // ServiceFusion REST Integration
     if (this.config.integrations.servicefusion) {
       const sf = new ServiceFusionIntegration(this.config.integrations.servicefusion);
-      await sf.initialize({ dryRun: this.isDryRun });
+      await sf.initialize();
       this.integrations.set('servicefusion', sf);
       logger.info('ServiceFusion integration initialized');
     }
@@ -181,25 +162,25 @@ export class PMIP {
    * Set up event handlers for real-time processing
    */
   private setupEventHandlers(): void {
-    // Handle sync events (Orchestra temporarily disabled)
-    // this.orchestra.on('sync.started', (event) => {
-    //   logger.info('Sync started', { workflow: event.workflow });
-    // });
+    // Handle sync events
+    this.orchestra.on('sync.started', (event) => {
+      logger.info('Sync started', { workflow: event.workflow });
+    });
 
-    // this.orchestra.on('sync.completed', (event) => {
-    //   logger.info('Sync completed', { 
-    //     workflow: event.workflow,
-    //     duration: event.duration,
-    //     entities: event.entitiesProcessed 
-    //   });
-    // });
+    this.orchestra.on('sync.completed', (event) => {
+      logger.info('Sync completed', { 
+        workflow: event.workflow,
+        duration: event.duration,
+        entities: event.entitiesProcessed 
+      });
+    });
 
-    // this.orchestra.on('sync.error', (event) => {
-    //   logger.error('Sync error', { 
-    //     workflow: event.workflow,
-    //     error: event.error 
-    //   });
-    // });
+    this.orchestra.on('sync.error', (event) => {
+      logger.error('Sync error', { 
+        workflow: event.workflow,
+        error: event.error 
+      });
+    });
 
     // Handle deduplication events
     this.deduplicationService.on('duplicate.detected', (event) => {
@@ -223,28 +204,6 @@ export class PMIP {
   async sync(entity: string, options?: any): Promise<any> {
     const workflow = `sync-${entity}`;
     return this.executeWorkflow(workflow, options);
-  }
-
-  /**
-   * Process natural language query using Intelligence Service
-   */
-  async query(naturalLanguageQuery: string): Promise<any> {
-    if (!this.intelligenceService) {
-      throw new Error('Intelligence Service not available. Please ensure both PropertyWare and ServiceFusion are configured.');
-    }
-    
-    return this.intelligenceService.processQuery(naturalLanguageQuery);
-  }
-
-  /**
-   * Get query suggestions based on partial input
-   */
-  async getSuggestions(partial: string): Promise<string[]> {
-    if (!this.intelligenceService) {
-      return [];
-    }
-    
-    return this.intelligenceService.getSuggestions(partial);
   }
 
   /**
@@ -290,13 +249,13 @@ export class PMIP {
 
 // Export convenience function
 export async function createPMIP(config: PMIPConfig, options?: PMIPOptions): Promise<PMIP> {
-  const pmip = new PMIP(config, options);
+  const pmip = new PMIP(config);
   await pmip.initialize(options);
   return pmip;
 }
 
 // Export types
-export * from './types/index.js';
-export * from './workflows/index.js';
-export * from './integrations/index.js';
-export * from './services/index.js';
+export * from './types';
+export * from './workflows';
+export * from './integrations';
+export * from './services';

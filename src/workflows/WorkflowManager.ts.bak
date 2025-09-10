@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { Workflow, WorkflowStep, RetryPolicy } from '../types/index.js';
-import { logger } from '../utils/logger.js';
+import { Workflow, WorkflowStep, RetryPolicy } from '../types';
+import { logger } from '../utils/logger';
 import * as cron from 'node-cron';
 
 export class WorkflowManager extends EventEmitter {
@@ -102,16 +102,14 @@ export class WorkflowManager extends EventEmitter {
     }
     
     const executionId = this.generateExecutionId();
-    const execution: any = {
+    const execution = {
       id: executionId,
       workflow: workflowName,
       startTime: new Date(),
       params,
       status: 'running',
       currentStep: 0,
-      results: [],
-      endTime: null,
-      error: null
+      results: []
     };
     
     this.activeExecutions.set(executionId, execution);

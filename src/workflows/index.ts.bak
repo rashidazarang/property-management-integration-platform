@@ -2,7 +2,7 @@
  * Workflow exports for PMIP
  */
 
-export { WorkflowManager } from './WorkflowManager.js';
+export { WorkflowManager } from './WorkflowManager';
 
 // Export pre-built workflow definitions
 export const workflows = {
