@@ -1,5 +1,5 @@
 {
-  "name": "@pmip/core",
+  "name": "@rashidazarang/pmip-core",
   "version": "1.0.0",
   "description": "Property Management Integration Platform - The universal sync platform for property management",
   "main": "dist/index.js",
@@ -41,13 +41,13 @@
   ],
   "author": {
     "name": "Rashid Azarang",
-    "email": "rashid@pmip.io"
+    "email": "rashid@azarang.com"
   },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/rashidazarang/property-management-integration-platform/issues"
   },
-  "homepage": "https://pmip.io",
+  "homepage": "https://github.com/rashidazarang/property-management-integration-platform#readme",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.450.0",
     "@aws-sdk/client-sns": "^3.450.0",

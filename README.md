@@ -4,10 +4,9 @@
   
   **The Universal Sync Platform for Property Management**
   
-  [![Version](https://img.shields.io/npm/v/@pmip/core)](https://www.npmjs.com/package/@pmip/core)
-  [![License](https://img.shields.io/github/license/rashidazarang/property-management-integration-platform)](LICENSE)
-  [![Build Status](https://img.shields.io/github/actions/workflow/status/rashidazarang/property-management-integration-platform/ci.yml)](https://github.com/rashidazarang/property-management-integration-platform/actions)
-  [![Coverage](https://img.shields.io/codecov/c/github/rashidazarang/property-management-integration-platform)](https://codecov.io/gh/rashidazarang/property-management-integration-platform)
+  [![npm version](https://img.shields.io/npm/v/@rashidazarang/pmip-core)](https://www.npmjs.com/package/@rashidazarang/pmip-core)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+  [![GitHub issues](https://img.shields.io/github/issues/rashidazarang/property-management-integration-platform)](https://github.com/rashidazarang/property-management-integration-platform/issues)
 </div>
 
 ## 🏢 Overview
@@ -28,13 +27,13 @@ PMIP is an enterprise-grade integration platform specifically designed for prope
 ### Installation
 
 ```bash
-npm install @pmip/core
+npm install @rashidazarang/pmip-core
 ```
 
 ### Basic Usage
 
 ```typescript
-import { createPMIP } from '@pmip/core';
+import { createPMIP } from '@rashidazarang/pmip-core';
 
 // Initialize PMIP
 const pmip = await createPMIP({

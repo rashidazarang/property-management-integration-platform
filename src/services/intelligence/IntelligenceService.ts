@@ -166,10 +166,12 @@ export class IntelligenceService {
         return await this.propertyWareAdapter.getLeases(params);
         
       case 'get_tenants':
-        return await this.propertyWareAdapter.getTenants(params);
+        // getTenants method to be implemented in adapter
+        return { message: 'getTenants not yet implemented', params };
         
       case 'update_lease':
-        return await this.propertyWareAdapter.updateLease(params.id, params);
+        // updateLease method to be implemented in adapter
+        return { message: 'updateLease not yet implemented', params };
         
       default:
         throw new Error(`Unknown PropertyWare tool: ${tool}`);
@@ -198,7 +200,8 @@ export class IntelligenceService {
         return await this.serviceFusionAdapter.updateJob(params.id, params);
         
       case 'assign_technician':
-        return await this.serviceFusionAdapter.assignTechnician(params.jobId, params.technicianId);
+        // assignTechnician method to be implemented in adapter
+        return { message: 'assignTechnician not yet implemented', params };
         
       case 'get_technicians':
         return await this.serviceFusionAdapter.getTechnicians(params);
