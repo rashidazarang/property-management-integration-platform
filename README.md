@@ -288,11 +288,4 @@ PMIP is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-Built with ❤️ by [Rashid Azarang](https://github.com/rashidazarang) and the property management community.
-
-Special thanks to:
-- GreenLight Property Management for the initial sync implementation
-- Anderson Properties for beta testing
-- The Agent Orchestra team for the orchestration framework
-
-
+Built with ❤️ by [Rashid Azarang](https://github.com/rashidazarang)
