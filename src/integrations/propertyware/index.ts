@@ -159,6 +159,30 @@ export class PropertyWareIntegration extends EventEmitter {
         updatedAt: new Date()
       }
     ]);
+    
+    // Add mock leases
+    this.mockData.set('leases', [
+      {
+        leaseId: 'MOCK-LEASE-001',
+        buildingId: 'MOCK-BLD-001',
+        unitId: 'MOCK-UNIT-001',
+        tenantName: 'John Tenant',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-12-31'),
+        rentAmount: 1500,
+        status: 'Active'
+      },
+      {
+        leaseId: 'MOCK-LEASE-002',
+        buildingId: 'MOCK-BLD-002',
+        unitId: 'MOCK-UNIT-002',
+        tenantName: 'Jane Tenant',
+        startDate: new Date('2024-06-01'),
+        endDate: new Date('2025-05-31'),
+        rentAmount: 2000,
+        status: 'Active'
+      }
+    ]);
   }
   
   /**
@@ -235,6 +259,10 @@ export class PropertyWareIntegration extends EventEmitter {
    * Get leases from PropertyWare
    */
   async getLeases(options?: any): Promise<any[]> {
+    if (this.isDryRun) {
+      logger.info('[DRY-RUN] Returning mock leases');
+      return this.mockData.get('leases') || [];
+    }
     return this.adapter.getLeases(options);
   }
   
