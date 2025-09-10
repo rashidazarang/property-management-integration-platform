@@ -253,15 +253,6 @@ const metrics = await pmip.getMetrics();
 - **Compliance**: SOC 2 Type II, GDPR, CCPA ready
 - **Audit Trail**: Immutable logs for 7 years
 
-## 💰 Pricing
-
-| Plan | Price | Units | Features |
-|------|-------|-------|----------|
-| **Starter** | $299/mo | Up to 100 | 2 integrations, basic workflows |
-| **Professional** | $999/mo | Up to 1,000 | 5 integrations, all workflows, analytics |
-| **Enterprise** | $2,999/mo | Unlimited | Unlimited integrations, custom workflows, SLA |
-| **White-Label** | Custom | Unlimited | Source license, co-branding |
-
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
@@ -313,7 +304,7 @@ Special thanks to:
 <div align="center">
   <strong>Ready to eliminate duplicate data entry?</strong>
   <br>
-  <a href="https://pmip.io/signup">Start Free Trial</a> •
+  <a href="https://pmip.io/signup">Get Started</a> •
   <a href="https://pmip.io/demo">Book Demo</a> •
-  <a href="https://pmip.io/pricing">View Pricing</a>
+  <a href="https://docs.pmip.io">Documentation</a>
 </div>
